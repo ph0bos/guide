@@ -1,4 +1,4 @@
-# guide-api #
+# guide #
 
 Guide is a prototype REST API exposing TV listings data. It combines a simple Scalatra API tier with a 28.io/MongoDB data tier.
 
