@@ -25,7 +25,7 @@ class ScheduleResource(system: ActorSystem) extends ScalatraServlet with FutureS
     if (params.contains("end")) end = DateTimeUtil.parseString(params("end"))
 
     new AsyncResult() {
-      val is = GuideService.getScheduledProgrammeList(params("channelId"), start, end)
+      val is = GuideService.getScheduledProgrammeList(params("channelId"), null, null, null, start, end)
     }
   }
 
