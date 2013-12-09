@@ -13,7 +13,7 @@ import com.pressassociation.guide.model.{Episode, Programme, Movie, Person, Chan
  */
 object GuideService {
 
-  val mongoClient =  MongoClient(MongoClientURI("mongodb://<user>:<password>@<host>:<port>/guide"))("guide")
+  val mongoClient =  MongoClient(MongoClientURI("mongodb://<user>:<pass>@<host>:<port>/guide"))("guide")
 
   /**
    * Return a list of available Categories
@@ -282,16 +282,21 @@ object GuideService {
    * @param end the end date
    * @return a programme list
    */
-  def getScheduledProgrammeList(channelId: String, start: DateTime, end: DateTime) : Future[List[Programme]] = future {
+  def getScheduledProgrammeList(channelId: String, movieId: String, seriesId: String, personId: String, start: DateTime, end: DateTime) : Future[List[Programme]] = future {
     val mongoColl = mongoClient("programme")
-    val query = MongoDBObject("channel.id" -> channelId)
+
+    val builder = MongoDBObject.newBuilder
+    if (channelId != null) builder += "channel.id" -> channelId
+    if (movieId != null) builder += "movie.id" -> movieId
+    if (seriesId != null) builder += "series.id" -> seriesId
+    if (personId != null) builder += "cast.id" -> personId
 
     val dateRange = "dateTime" $gte start.toString() $lte end.toString()
 
     val sort = MongoDBObject("dateTime" -> 1)
     val filter = MongoDBObject("cast" -> 0, "crew" -> 0)
 
-    (mongoColl.find(query ++ dateRange, filter).sort(sort).toList).map(
+    (mongoColl.find(builder.result ++ dateRange, filter).sort(sort).toList).map(
       res => grater[Programme].asObject(res)
     )
   }
