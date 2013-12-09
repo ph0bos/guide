@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
  */
 class CategoryResourceIT extends ScalatraSuite with FunSuite {
 
-  addServlet(new CategoryResource(ActorSystem()), "/*")
+  addServlet(new CategoryResource, "/*")
 
   test("get category list") {
     get("/") {

@@ -1,6 +1,9 @@
 package com.pressassociation.guide.model
 
+import com.novus.salat.annotations._
+
 case class Movie (
+  @Key("id")
   id: String,
   title: String,
   year: Option[Int],
@@ -10,3 +13,5 @@ case class Movie (
   synopsis2: Option[String],
   synopsis3: Option[String]
 )
+
+

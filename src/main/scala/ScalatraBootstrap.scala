@@ -1,4 +1,4 @@
-import _root_.akka.actor.{ActorSystem, Props}
+import _root_.akka.actor.ActorSystem
 import org.scalatra._
 import javax.servlet.ServletContext
 import com.pressassociation.guide.resource._

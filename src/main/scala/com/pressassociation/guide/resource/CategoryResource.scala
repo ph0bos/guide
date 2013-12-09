@@ -9,15 +9,19 @@ import com.pressassociation.guide.service.GuideService
 
 class CategoryResource(system: ActorSystem) extends ScalatraServlet with FutureSupport with JacksonJsonSupport {
 
+  protected implicit def jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher
-  protected implicit val jsonFormats: Formats = DefaultFormats
 
   /**
    * Gets a list of available Categories.
    */
   get("/") {
-    new AsyncResult {
-      val is = GuideService.getCategoryList()
+    new AsyncResult() {
+      val is = GuideService.getCategoryList
     }
+  }
+
+  before() {
+    contentType = formats("json")
   }
 }

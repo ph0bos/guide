@@ -10,7 +10,7 @@ object DateTimeUtil {
   val NowMinus = """now\.minus\.(\d+)""".r
 
   /**
-   * Parse an interpret an input string to return a valie DateTime object
+   * Parse an interpret an input string to return a valid DateTime object
    *
    * @param input
    * @return a datetime object

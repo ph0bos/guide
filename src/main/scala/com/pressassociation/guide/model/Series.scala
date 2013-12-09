@@ -1,6 +1,9 @@
 package com.pressassociation.guide.model
 
+import com.novus.salat.annotations.Key
+
 case class Series (
+  @Key("id")
   id: String,
   title: String,
   genre: Option[String],

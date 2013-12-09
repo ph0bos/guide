@@ -1,33 +1,31 @@
 package com.pressassociation.guide.service
 
-import com.pressassociation.guide.model._
-import dispatch.{:/, Req}
-import scala.concurrent.{ExecutionContext, Future}
-import com.pressassociation.guide.akka.DispatchAkka
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import java.util.Date
 import org.joda.time.DateTime
+import com.novus.salat._
+import com.novus.salat.global._
+import com.mongodb.casbah.Imports._
+import scala.concurrent._
+import ExecutionContext.Implicits.global
+import com.pressassociation.guide.model.{Episode, Programme, Movie, Person, Channel, Series}
 
 /**
  * Created by stevenr on 02/12/2013.
  */
 object GuideService {
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
-  protected implicit val baseUrl: Req = :/("guide.28.io")
+  val mongoClient =  MongoClient(MongoClientURI("mongodb://<user>:<password>@<host>:<port>/guide"))("guide")
 
   /**
    * Return a list of available Categories
    *
    * @return a list of Categories
    */
-  def getCategoryList()(implicit ctx: ExecutionContext) : Future[Seq[String]] = {
-    val req = baseUrl / "category" / "list.jq"
+  def getCategoryList : Future[List[String]] = future {
+    val movies = (mongoClient("movie").distinct("category").toList)
+    val series = (mongoClient("series").distinct("category").toList)
+    val categories = ((movies ++ series).distinct)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[String]]
-    }
+    (categories).map(_.toString)
   }
 
   /**
@@ -35,12 +33,13 @@ object GuideService {
    *
    * @return a list of Channels
    */
-  def getChannelList()(implicit ctx: ExecutionContext) : Future[Seq[Channel]] = {
-    val req = baseUrl / "channel" / "list.jq"
+  def getChannelList : Future[List[Channel]] = future {
+    val mongoColl = mongoClient("channel")
+    val query = MongoDBObject.empty
+    val filter = MongoDBObject("epg" -> null)
+    val sort = MongoDBObject("name" -> 1)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Channel]]
-    }
+    (mongoColl.find(query, filter).sort(sort).toList).map(grater[Channel].asObject(_))
   }
 
   /**
@@ -49,13 +48,11 @@ object GuideService {
    * @param id the channel identifier
    * @return a Channel
    */
-  def getChannel(id: String)(implicit ctx: ExecutionContext): Future[Channel] = {
-    var req = baseUrl / "channel" / "detail.jq"
-    req = req <<? Map("channelId" -> id)
+  def getChannel(id: String) : Future[Option[Channel]] = future {
+    val mongoColl = mongoClient("channel")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Channel]
-    }
+    (mongoColl.findOne(query)).map(grater[Channel].asObject(_))
   }
 
   /**
@@ -63,13 +60,13 @@ object GuideService {
    *
    * @return a list of Movies
    */
-  def getMovieList(search: String)(implicit ctx: ExecutionContext) : Future[Seq[Movie]] = {
-    var req = baseUrl / "movie" / "list.jq"
-    req = req <<? Map("search" -> search)
+  def getMovieList(search: String) : Future[List[Movie]] = future {
+    val mongoColl = mongoClient("movie")
+    val title = "(?i)" + search
+    val query = MongoDBObject("title" -> title.r)
+    val filter = MongoDBObject("id" -> 1, "title" -> 1, "year" -> 1)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Movie]]
-    }
+    (mongoColl.find(query, filter).toList).map(grater[Movie].asObject(_))
   }
 
   /**
@@ -78,13 +75,11 @@ object GuideService {
    * @param id the movie identifier
    * @return a Movie
    */
-  def getMovie(id: String)(implicit ctx: ExecutionContext) : Future[Movie] = {
-    var req = baseUrl / "movie" / "detail.jq"
-    req = req <<? Map("movieId" -> id)
+  def getMovie(id: String) : Future[Option[Movie]] = future {
+    val mongoColl = mongoClient("movie")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Movie]
-    }
+    (mongoColl.findOne(query)).map(grater[Movie].asObject(_))
   }
 
   /**
@@ -93,13 +88,13 @@ object GuideService {
    * @param id the movie identifier
    * @return a cast list of a Movie
    */
-  def getMovieCast(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "person" / "detail-cast.jq"
-    req = req <<? Map("id" -> id, "collection" -> "movie")
+  def getMovieCast(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("movie")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("cast", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -108,13 +103,13 @@ object GuideService {
    * @param id the movie identifier
    * @return a crew list of a Movie
    */
-  def getMovieCrew(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "person" / "detail-crew.jq"
-    req = req <<? Map("id" -> id, "collection" -> "movie")
+  def getMovieCrew(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("movie")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("crew", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -122,13 +117,14 @@ object GuideService {
    *
    * @return a list of Series
    */
-  def getSeriesList(search: String)(implicit ctx: ExecutionContext) : Future[Seq[Series]] = {
-    var req = baseUrl / "series" / "list.jq"
-    req = req <<? Map("search" -> search)
+  def getSeriesList(search: String) : Future[List[Series]] = future {
+    val mongoColl = mongoClient("series")
+    val title = "(?i)" + search + ""
+    val query = MongoDBObject("title" -> title.r)
+    val filter = MongoDBObject("id" -> 1, "title" -> 1, "category" -> 1)
+    val sort = MongoDBObject("title" -> 1)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Series]]
-    }
+    (mongoColl.find(query, filter).sort(sort).toList).map(grater[Series].asObject(_))
   }
 
   /**
@@ -137,13 +133,11 @@ object GuideService {
    * @param id the series identifier
    * @return a Series
    */
-  def getSeries(id: String)(implicit ctx: ExecutionContext) : Future[Series] = {
-    var req = baseUrl / "series" / "detail.jq"
-    req = req <<? Map("seriesId" -> id)
+  def getSeries(id: String) : Future[Option[Series]] = future {
+    val mongoColl = mongoClient("series")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Series]
-    }
+    (mongoColl.findOne(query)).map(grater[Series].asObject(_))
   }
 
   /**
@@ -152,13 +146,13 @@ object GuideService {
    * @param id the series identifier
    * @return a Series cast list
    */
-  def getSeriesCast(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "series" / "detail-cast.jq"
-    req = req <<? Map("seriesId" -> id)
+  def getSeriesCast(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("series")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("cast", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -167,13 +161,13 @@ object GuideService {
    * @param id the series identifier
    * @return a Series crew list
    */
-  def getSeriesCrew(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "series" / "detail-crew.jq"
-    req = req <<? Map("seriesId" -> id)
+  def getSeriesCrew(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("series")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("cast", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -182,13 +176,8 @@ object GuideService {
    * @param id the series identifier
    * @return a Series episode list
    */
-  def getSeriesEpisodeList(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Episode]] = {
-    var req = baseUrl / "series" / "list-episode.jq"
-    req = req <<? Map("seriesId" -> id)
+  def getSeriesEpisodeList(id: String) = future {
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Episode]]
-    }
   }
 
   /**
@@ -197,13 +186,8 @@ object GuideService {
    * @param id the series identifier
    * @return a Series season list
    */
-  def getSeriesSeasonList(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Season]] = {
-    var req = baseUrl / "series" / "list-season.jq"
-    req = req <<? Map("seriesId" -> id)
+  def getSeriesSeasonList(id: String) = future {
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Season]]
-    }
   }
 
   /**
@@ -211,13 +195,12 @@ object GuideService {
    *
    * @return a list of Persons
    */
-  def getPersonList(search: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "person" / "list.jq"
-    req = req <<? Map("search" -> search)
+  def getPersonList(search: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("person")
+    val name = "(?i)" + search
+    val query = MongoDBObject("name" -> name.r)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.find(query).toList).map(grater[Person].asObject(_))
   }
 
   /**
@@ -226,13 +209,11 @@ object GuideService {
    * @param id the person identifier
    * @return a Person
    */
-  def getPerson(id: String)(implicit ctx: ExecutionContext) : Future[Person] = {
-    var req = baseUrl / "person" / "detail.jq"
-    req = req <<? Map("personId" -> id)
+  def getPerson(id: String) : Future[Option[Person]] = future {
+    val mongoColl = mongoClient("person")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Person]
-    }
+    (mongoColl.findOne(query)).map(grater[Person].asObject(_))
   }
 
   /**
@@ -241,13 +222,11 @@ object GuideService {
    * @param id the episode identifier
    * @return a Episode
    */
-  def getEpisode(id: String)(implicit ctx: ExecutionContext) : Future[Episode] = {
-    var req = baseUrl / "episode" / "detail.jq"
-    req = req <<? Map("episodeId" -> id)
+  def getEpisode(id: String) : Future[Option[Episode]] = future {
+    val mongoColl = mongoClient("episode")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Episode]
-    }
+    (mongoColl.findOne(query)).map(grater[Episode].asObject(_))
   }
 
   /**
@@ -256,13 +235,13 @@ object GuideService {
    * @param id the episode identifier
    * @return an Episode Cast list
    */
-  def getEpisodeCast(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "episode" / "detail-cast.jq"
-    req = req <<? Map("episodeId" -> id)
+  def getEpisodeCast(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("episode")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("cast", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -271,13 +250,13 @@ object GuideService {
    * @param id the episode identifier
    * @return an Episode Crew list
    */
-  def getEpisodeCrew(id: String)(implicit ctx: ExecutionContext) : Future[Seq[Person]] = {
-    var req = baseUrl / "episode" / "detail-crew.jq"
-    req = req <<? Map("episodeId" -> id)
+  def getEpisodeCrew(id: String) : Future[List[Person]] = future {
+    val mongoColl = mongoClient("episode")
+    val query = MongoDBObject("id" -> id)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Person]]
-    }
+    (mongoColl.distinct("crew", query).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
   }
 
   /**
@@ -286,13 +265,13 @@ object GuideService {
    * @param channelId the channel identifier
    * @return a programme list
    */
-  def getScheduledProgrammeList(channelId: String)(implicit ctx: ExecutionContext) : Future[Seq[Programme]] = {
-    var req = baseUrl / "schedule" / "list.jq"
-    req = req <<? Map("channelId" -> channelId)
+  def getScheduledProgrammeList(channelId: String) : Future[List[Programme]] = future {
+    val mongoColl = mongoClient("programme")
+    val query = MongoDBObject("channel.id" -> channelId)
+    val sort = MongoDBObject("dateTime" -> 1)
+    val filter = MongoDBObject("programme" -> 1)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Programme]]
-    }
+    (mongoColl.find(query, filter).sort(sort).toList).map(grater[Programme].asObject(_))
   }
 
   /**
@@ -303,14 +282,17 @@ object GuideService {
    * @param end the end date
    * @return a programme list
    */
-  def getScheduledProgrammeList(channelId: String, start: DateTime, end: DateTime)(implicit ctx: ExecutionContext) : Future[Seq[Programme]] = {
-    var req = baseUrl / "schedule" / "list.jq"
-    req = req <<? Map("start" -> start.toString)
-    req = req <<? Map("end" -> end.toString)
-    req = req <<? Map("channelId" -> channelId)
+  def getScheduledProgrammeList(channelId: String, start: DateTime, end: DateTime) : Future[List[Programme]] = future {
+    val mongoColl = mongoClient("programme")
+    val query = MongoDBObject("channel.id" -> channelId)
 
-    (DispatchAkka.getData(req)).map {
-      case res => parse(res).extract[Seq[Programme]]
-    }
+    val dateRange = "dateTime" $gte start.toString() $lte end.toString()
+
+    val sort = MongoDBObject("dateTime" -> 1)
+    val filter = MongoDBObject("cast" -> 0, "crew" -> 0)
+
+    (mongoColl.find(query ++ dateRange, filter).sort(sort).toList).map(
+      res => grater[Programme].asObject(res)
+    )
   }
 }
