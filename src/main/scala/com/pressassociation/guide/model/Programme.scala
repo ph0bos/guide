@@ -1,6 +1,8 @@
 package com.pressassociation.guide.model
 
+import com.novus.salat.global._
 import com.novus.salat.annotations._
+import com.novus.salat.dao._
 
 case class Programme (
   @Key("id")
@@ -27,3 +29,5 @@ case class Programme (
   episode: Option[Episode],
   image: Option[Seq[String]]
 )
+
+object ProgrammeDAO extends SalatDAO[Programme, String](collection = MongoDBSetup.mongoDB("programme"))
