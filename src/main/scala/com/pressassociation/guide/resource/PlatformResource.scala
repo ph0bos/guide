@@ -17,24 +17,18 @@ class PlatformResource(system: ActorSystem) extends ScalatraServlet
    * Gets a list of available Platforms.
    */
   get("/") {
-    GuideService.getPlatformList
-    /*
     new AsyncResult() {
       val is = GuideService.getPlatformList
     }
-    */
   }
 
   /**
    * Get a specific Platform by identifier.
    */
   get("/:id") {
-    GuideService.getPlatform(params("id"))
-    /*
     new AsyncResult() {
       val is = GuideService.getPlatform(params("id"))
     }
-    */
   }
 
   options("/*"){
