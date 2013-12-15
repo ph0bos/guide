@@ -2,9 +2,9 @@ package com.pressassociation.guide.model
 
 import com.novus.salat.annotations._
 
-case class Epg (
+case class Platform (
   @Key("id")
   id: String,
-  name: String,
-  number: Int
+  name: Option[String],
+  region: Seq[Region] = Seq.empty
 )

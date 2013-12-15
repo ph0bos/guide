@@ -1,11 +1,14 @@
 package com.pressassociation.guide.model
 
+import com.novus.salat.annotations._
+
 case class Programme (
+  @Key("id")
   id: String,
   dateTime: Option[java.util.Date],
-  duration: Int,
   title: String,
-  genre: String,
+  duration: Int,
+  category: Seq[String],
   synopsis1: Option[String],
   synopsis2: Option[String],
   synopsis3: Option[String],
@@ -21,5 +24,6 @@ case class Programme (
   movie: Option[Movie],
   series: Option[Series],
   season: Option[Season],
-  episode: Option[Episode]
+  episode: Option[Episode],
+  image: Option[Seq[String]]
 )

@@ -2,9 +2,8 @@ package com.pressassociation.guide.model
 
 import com.novus.salat.annotations._
 
-case class Epg (
+case class Region (
   @Key("id")
-  id: String,
-  name: String,
-  number: Int
+  id: Option[String],
+  name: Option[String]
 )
