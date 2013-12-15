@@ -11,5 +11,6 @@ case class Series (
   synopsis: Option[String],
   summary: Option[String],
   web: Option[Seq[String]],
-  twitter: Option[Seq[String]]
+  twitter: Option[Seq[String]],
+  image: Option[Seq[String]]
 )

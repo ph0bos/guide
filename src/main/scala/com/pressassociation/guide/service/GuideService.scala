@@ -6,14 +6,22 @@ import com.novus.salat.global._
 import com.mongodb.casbah.Imports._
 import scala.concurrent._
 import ExecutionContext.Implicits.global
-import com.pressassociation.guide.model.{Episode, Programme, Movie, Person, Channel, Series}
+import com.pressassociation.guide.model.Episode
+import com.pressassociation.guide.model.Programme
+import com.pressassociation.guide.model.Movie
+import com.pressassociation.guide.model.Person
+import com.pressassociation.guide.model.Channel
+import com.pressassociation.guide.model.Series
+import com.pressassociation.guide.model.Platform
+import com.typesafe.config.{Config, ConfigFactory}
 
 /**
  * Created by stevenr on 02/12/2013.
  */
 object GuideService {
 
-  val mongoClient =  MongoClient(MongoClientURI("mongodb://<user>:<pass>@<host>:<port>/guide"))("guide")
+  val conf = ConfigFactory.load();
+  val mongoClient =  MongoClient(MongoClientURI(conf.getString("mongo.db.connection")))("guide")
 
   /**
    * Return a list of available Categories
@@ -29,6 +37,34 @@ object GuideService {
   }
 
   /**
+   * Return a list of available Platforms
+   *
+   * @return a list of Platforms
+   */
+  def getPlatformList = {
+    val mongoColl = mongoClient("platform")
+    val query = MongoDBObject.empty
+    val filter = MongoDBObject("id" -> 1, "name" -> 1)
+    val sort = MongoDBObject("name" -> 1)
+
+    (mongoColl.find(query, filter).sort(sort).toList).map(grater[Platform].asObject(_))
+  }
+
+  /**
+   * Return a Platform
+   *z
+   * @param id the platform identifier
+   * @return a Platform
+   */
+  def getPlatform(id: String) = {
+    val mongoColl = mongoClient("platform")
+    val query = MongoDBObject("id" -> id)
+    val filter = MongoDBObject("id" -> 1, "name" -> 1, "region" -> 1)
+
+    (mongoColl.findOne(query, filter)).map(grater[Platform].asObject(_))
+  }
+
+  /**
    * Return a list of available Channels
    *
    * @return a list of Channels
@@ -36,10 +72,26 @@ object GuideService {
   def getChannelList : Future[List[Channel]] = future {
     val mongoColl = mongoClient("channel")
     val query = MongoDBObject.empty
-    val filter = MongoDBObject("epg" -> null)
-    val sort = MongoDBObject("name" -> 1)
+    val sort = MongoDBObject("mediaType" -> -1, "number" -> 1)
 
-    (mongoColl.find(query, filter).sort(sort).toList).map(grater[Channel].asObject(_))
+    (mongoColl.find(query).sort(sort).toList).map(grater[Channel].asObject(_))
+  }
+
+  /**
+   * Return a list of available Channels
+   *
+   * @return a list of Channels
+   */
+  def getChannelList(platformId: String, regionId: String) = future {
+    val mongoColl = mongoClient("epg")
+    val query = MongoDBObject("platform.id" -> platformId)
+    val sort = MongoDBObject("mediaType" -> -1, "number" -> 1)
+
+    val queryExt = $or(("regional" -> false), ("region.id" -> regionId))
+
+    (mongoColl.find(query ++ queryExt).sort(sort).toList).map(
+      res => grater[Channel].asObject(res)
+    )
   }
 
   /**

@@ -9,7 +9,8 @@ import scala.concurrent.{Future, ExecutionContext}
 import org.joda.time.DateTime
 import com.pressassociation.guide.util.DateTimeUtil
 
-class MovieResource(system: ActorSystem) extends ScalatraServlet with FutureSupport with JacksonJsonSupport {
+class MovieResource(system: ActorSystem) extends ScalatraServlet
+  with FutureSupport with JacksonJsonSupport with CorsSupport {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher

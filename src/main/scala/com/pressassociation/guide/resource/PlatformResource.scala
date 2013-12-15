@@ -7,19 +7,34 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json._
 import com.pressassociation.guide.service.GuideService
 
-class CategoryResource(system: ActorSystem) extends ScalatraServlet
+class PlatformResource(system: ActorSystem) extends ScalatraServlet
   with FutureSupport with JacksonJsonSupport with CorsSupport {
 
   protected implicit def jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher
 
   /**
-   * Gets a list of available Categories.
+   * Gets a list of available Platforms.
    */
   get("/") {
+    GuideService.getPlatformList
+    /*
     new AsyncResult() {
-      val is = GuideService.getCategoryList
+      val is = GuideService.getPlatformList
     }
+    */
+  }
+
+  /**
+   * Get a specific Platform by identifier.
+   */
+  get("/:id") {
+    GuideService.getPlatform(params("id"))
+    /*
+    new AsyncResult() {
+      val is = GuideService.getPlatform(params("id"))
+    }
+    */
   }
 
   options("/*"){

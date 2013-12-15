@@ -9,7 +9,8 @@ import com.pressassociation.guide.util.DateTimeUtil
 import org.joda.time.DateTime
 import scala.concurrent.ExecutionContext
 
-class ScheduleResource(system: ActorSystem) extends ScalatraServlet with FutureSupport with JacksonJsonSupport {
+class ScheduleResource(system: ActorSystem) extends ScalatraServlet
+  with FutureSupport with JacksonJsonSupport with CorsSupport {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher
@@ -27,6 +28,10 @@ class ScheduleResource(system: ActorSystem) extends ScalatraServlet with FutureS
     new AsyncResult() {
       val is = GuideService.getScheduledProgrammeList(params("channelId"), null, null, null, start, end)
     }
+  }
+
+  options("/*"){
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
   }
 
   before() {

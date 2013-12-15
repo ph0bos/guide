@@ -9,7 +9,8 @@ import scala.concurrent.ExecutionContext
 import org.joda.time.DateTime
 import com.pressassociation.guide.util.DateTimeUtil
 
-class ChannelResource(system: ActorSystem) extends ScalatraServlet with FutureSupport with JacksonJsonSupport {
+class ChannelResource(system: ActorSystem) extends ScalatraServlet
+  with FutureSupport with JacksonJsonSupport with CorsSupport {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher
@@ -18,9 +19,14 @@ class ChannelResource(system: ActorSystem) extends ScalatraServlet with FutureSu
    * Get a list of available Channels.
    */
   get("/") {
-    new AsyncResult() {
-      val is = GuideService.getChannelList
-    }
+      new AsyncResult() {
+         val is =
+           if (params.contains("platformId") && params.contains("regionId")) {
+             GuideService.getChannelList(params("platformId"), params("regionId"))
+           } else {
+             GuideService.getChannelList
+           }
+       }
   }
 
   /**
@@ -45,6 +51,10 @@ class ChannelResource(system: ActorSystem) extends ScalatraServlet with FutureSu
     new AsyncResult() {
       val is = GuideService.getScheduledProgrammeList(params("id"), null, null, null, start, end)
     }
+  }
+
+  options("/*"){
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
   }
 
   before() {

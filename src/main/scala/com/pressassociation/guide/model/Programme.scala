@@ -8,7 +8,7 @@ case class Programme (
   dateTime: Option[java.util.Date],
   title: String,
   duration: Int,
-  category: List[String],
+  category: Seq[String],
   synopsis1: Option[String],
   synopsis2: Option[String],
   synopsis3: Option[String],
@@ -24,5 +24,6 @@ case class Programme (
   movie: Option[Movie],
   series: Option[Series],
   season: Option[Season],
-  episode: Option[Episode]
+  episode: Option[Episode],
+  image: Option[Seq[String]]
 )

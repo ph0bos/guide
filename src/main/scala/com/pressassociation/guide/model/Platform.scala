@@ -2,12 +2,9 @@ package com.pressassociation.guide.model
 
 import com.novus.salat.annotations._
 
-case class Channel (
+case class Platform (
   @Key("id")
   id: String,
   name: Option[String],
-  number: Option[Int],
-  image: Option[String],
-  url: Option[String],
-  mediaType: Option[String]
+  region: Seq[Region] = Seq.empty
 )

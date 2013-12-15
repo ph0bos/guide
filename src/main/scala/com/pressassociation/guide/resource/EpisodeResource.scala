@@ -7,7 +7,8 @@ import org.scalatra.json._
 import com.pressassociation.guide.service.GuideService
 import scala.concurrent.ExecutionContext
 
-class EpisodeResource(system: ActorSystem) extends ScalatraServlet with FutureSupport with JacksonJsonSupport {
+class EpisodeResource(system: ActorSystem) extends ScalatraServlet
+  with FutureSupport with JacksonJsonSupport with CorsSupport {
 
   protected implicit val jsonFormats: Formats = DefaultFormats
   protected implicit def executor: ExecutionContext = system.dispatcher
@@ -37,6 +38,10 @@ class EpisodeResource(system: ActorSystem) extends ScalatraServlet with FutureSu
     new AsyncResult() {
       val is = GuideService.getEpisodeCrew(params("id"))
     }
+  }
+
+  options("/*"){
+    response.setHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
   }
 
   before() {

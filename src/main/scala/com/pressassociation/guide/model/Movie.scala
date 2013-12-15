@@ -11,7 +11,8 @@ case class Movie (
   certificate: Option[String],
   synopsis1: Option[String],
   synopsis2: Option[String],
-  synopsis3: Option[String]
+  synopsis3: Option[String],
+  image: Option[Seq[String]]
 )
 
 

@@ -10,5 +10,8 @@ case class Episode (
   total: Option[Int],
   synopsis1: Option[String],
   synopsis2: Option[String],
-  synopsis3: Option[String]
+  synopsis3: Option[String],
+  series: Option[Series],
+  season: Option[Season],
+  image: Option[Seq[String]]
 )

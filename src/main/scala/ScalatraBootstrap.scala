@@ -9,6 +9,7 @@ class ScalatraBootstrap extends LifeCycle {
 
   override def init(context: ServletContext) {
     context.mount(new CategoryResource(system), "/category/*")
+    context.mount(new PlatformResource(system), "/platform/*")
     context.mount(new ChannelResource(system), "/channel/*")
     context.mount(new PersonResource(system), "/person/*")
     context.mount(new MovieResource(system), "/movie/*")
