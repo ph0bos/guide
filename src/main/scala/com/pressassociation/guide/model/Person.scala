@@ -8,6 +8,18 @@ case class Person (
   @Key("id")
   id: String,
   name: String,
+  firstName: Option[String],
+  middleName: Option[String],
+  lastName: Option[String],
+  gender: Option[String],
+  earlyLife: Option[String],
+  career: Option[String],
+  quote: Option[String],
+  bestKnownFor: Option[String],
+  trivia: Option[String],
+  dob: Option[java.util.Date],
+  pob: Option[String],
+  image: Seq[String] = Seq.empty,
   role: Option[String]
 )
 

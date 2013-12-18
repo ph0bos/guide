@@ -9,7 +9,9 @@ case class Epg (
   id: String,
   name: String,
   mediaType: Option[String],
-  number: Int
+  number: Int,
+  image: Option[String],
+  url: Option[String]
 )
 
 object EpgDAO extends SalatDAO[Epg, String](collection = MongoDBSetup.mongoDB("epg"))

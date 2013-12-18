@@ -33,4 +33,16 @@ object EpisodeDAO extends SalatDAO[Episode, String](collection = MongoDBSetup.mo
       res => grater[Person].fromJSON(res.toString)
     )
   }
+
+  def getSeriesCast(id: String): List[Person] = {
+    (collection.distinct("cast", MongoDBObject("series.id" -> id)).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
+  }
+
+  def getSeriesCrew(id: String): List[Person] = {
+    (collection.distinct("crew", MongoDBObject("series.id" -> id)).toList).map(
+      res => grater[Person].fromJSON(res.toString)
+    )
+  }
 }

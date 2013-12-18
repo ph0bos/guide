@@ -156,8 +156,8 @@ object GuideService {
    * @return a Series cast list
    */
   def getSeriesCast(id: String) : Future[List[Person]] = future {
-    SeriesDAO
-      .getCast(id)
+    EpisodeDAO
+      .getSeriesCast(id)
   }
 
   /**
@@ -167,8 +167,8 @@ object GuideService {
    * @return a Series crew list
    */
   def getSeriesCrew(id: String) : Future[List[Person]] = future {
-    SeriesDAO
-      .getCrew(id)
+    EpisodeDAO
+      .getSeriesCrew(id)
   }
 
   /**
@@ -198,7 +198,7 @@ object GuideService {
    */
   def getPersonList(search: String) : Future[List[Person]] = future {
     PersonDAO
-      .find(ref = MongoDBObject("name" -> ("(?i)" + search).r))
+      .find(ref = MongoDBObject("name" -> ("(?i)" + search).r), keys = MongoDBObject("id" -> 1, "name" -> 1, "image" -> -1))
       .sort(orderBy = MongoDBObject("name" -> 1))
       .toList
   }
